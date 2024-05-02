@@ -1,6 +1,6 @@
 DeepForest requires csv files used in training to be in a certain format. This Python (version 3.9) code takes images with bounding boxes drawn using Digimap and creates a csv from them, in the format required by the DeepForest package.   
  
-Additional packages required are: 
+Additional packages required are:  
     numpy  
     rasterio  
     pandas  
