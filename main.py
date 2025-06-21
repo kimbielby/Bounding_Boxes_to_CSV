@@ -14,26 +14,28 @@ img_width_px = 0                 # Width of image in pixels
 img_height_px = 0                # Height of image in pixels
 px_per_m = 0                       # Number of pixels per metre of geo-coordinates
 
-""" 
-Main entry point
-Handles all methods 
-Params:
-    geojson_filepath is the filepath to where the geojson file lives, including the name of the file and the file extension
-    img_filepath is the filepath to where the relevant image lives, including the name of the image and the file extension 
-    new_csv_name is the filepath to where you want the csv to be saved, including the name of the csv and the file extension
-    label is the what you want to label the feature, e.g. 'tree' or 'oak' 
-"""
-def here_we_go(geojson_filepath, img_filepath, new_csv_name, id_name, label):
+def here_we_go(geojson_filepath, img_filepath, new_csv_name, label):
+    """
+    Handles all functions
+    :param geojson_filepath: The name (and path) of the geojson file
+    :param img_filepath: The name (and path) of the image
+    :param new_csv_name: The name (and path to) of the new csv file to be created
+    :param label: What you want to label the feature (e.g. 'tree' or 'oak')
+    """
     poss_id, tree_annot = get_valid_id(geojson_filepath, img_filepath)
     full_coords_list = get_id_coords(poss_id, tree_annot)
-    list_for_csv = making_lists_for_csv(img_filepath, full_coords_list, id_name, label)
+    list_for_csv = making_lists_for_csv(img_filepath, full_coords_list, label)
     create_csv(list_for_csv, new_csv_name)
 
-""" 
-Gets a list of id's from the geojson file whose bounding boxes geo-coordinates 
-    are within those of the image 
-"""
 def get_valid_id(geo_json_file, img_filepath):
+    """
+    Gets a list of id's from the geojson file whose bounding boxes geo-
+    coordinates are within those of the image
+    :param geo_json_file: The name (and path) of the geojson file
+    :param img_filepath: The name (and path) of the image to check
+    :return: List of possible id's from the geojson file and the loaded
+        geojson file
+    """
     # Open the GeoJSON file and load it with JSON
     geo_j_file = open(geo_json_file)
     tree_annotations = json.load(geo_j_file)
@@ -61,11 +63,13 @@ def get_valid_id(geo_json_file, img_filepath):
 
     return poss_id_list, tree_annotations
 
-"""
-Calculates image width and height in both pixels and geo-coordinates 
-Also calculates pixels per metre
-"""
 def calc_px_per(img_file):
+    """
+    Calculates the width and height of the image, in both pixels and geo-
+    coordinates, as well as pixels per metre.
+    Updates global vars.
+    :param img_file: The image file
+    """
     global img_width_px
     global img_height_px
     global px_per_m
@@ -86,10 +90,12 @@ def calc_px_per(img_file):
     # Image pixels per geo-coordinate metre
     px_per_m = img_width_px / x_coords_span
 
-"""
-Calculates the geolocation boundaries of the image & updates global variables
-"""
 def calc_geo_coords_boundaries(img_file):
+    """
+    Calculates the geo-location boundaries of the image & updates global
+    variables
+    :param img_file: The image file
+    """
     global img_left_bounds
     global img_right_bounds
     global img_top_bounds
@@ -104,10 +110,14 @@ def calc_geo_coords_boundaries(img_file):
     img_top_bounds = the_image.bounds.top
     img_bottom_bounds = the_image.bounds.bottom
 
-"""
-Gets geo-coordinates for each id on id_list and stores them in 2D List
-"""
 def get_id_coords(id_list, annot_file):
+    """
+    Gets geo-coordinates for each id on id_list and stores them in a 2D
+    List
+    :param id_list: The list of possible id's from the geojson file
+    :param annot_file: The loaded geojson file
+    :return: List of geo-coordinates for all id's
+    """
     # Go through geojson and get coordinates for each id in id_list
     full_coords_list = []
 
@@ -118,16 +128,16 @@ def get_id_coords(id_list, annot_file):
 
     return full_coords_list
 
-"""
-From full_coords_list puts certain coordinates into a separate 2D list as:
-    image_path (name of the image)
-    xmin
-    ymin
-    xmax
-    ymax
-    label (e.g. 'tree')
-"""
-def making_lists_for_csv(img_name, coord_list, id_name, label):
+def making_lists_for_csv(img_name, coord_list, label):
+    """
+    Gets the min and max geo-locations of bounding box height and width
+    then converts to pixels
+    :param img_name: The image file name
+    :param coord_list: The List of coordinates for the image
+    :param label: The label given to that bounding box
+    :return: The multi-dimensional List with image name, bounding box
+        details in pixels and label
+    """
     # Take certain coordinates from full_coords_list and put them into a separate list with the following pattern:
     # image_path (name of image); xmin; ymin; xmax; ymax; label (e.g. 'Tree')
 
@@ -147,13 +157,17 @@ def making_lists_for_csv(img_name, coord_list, id_name, label):
         # Add that bounding box list to the list of all bounding boxes in image
         for_csv_list.append(temp_list)
 
-        # Return copy of for_csv_list but with the image's pixel min-max for each bounding box instead of the geo versions
-        return calc_img_px_coords(for_csv_list)
+    # Return copy of for_csv_list but with the image's pixel min-max for each bounding box instead of the geo versions
+    return calc_img_px_coords(for_csv_list)
 
-""" 
-Calculates the image's pixel min-max for bounding box and replaces their geo-coordinate equivalent in for_csv List 
-"""
 def calc_img_px_coords(list_for_csv):
+    """
+    Calculates the image's pixel min-max for each bounding box and
+    replaces their geo-coordinate equivalent in for_csv_list
+    :param list_for_csv: List that holds image name, mins and maxes and
+        label
+    :return: list_for_csv with updated mins and maxes
+    """
     list_for_csv_copy = copy.deepcopy(list_for_csv)
     # Calculate image pixel min-max for bounding box and replace their geo-coordinate equivalent in for_csv List
     for i in range(len(list_for_csv_copy)):
@@ -178,12 +192,15 @@ def calc_img_px_coords(list_for_csv):
         # Replace items in positions 1 through 4 in the List
         list_for_csv_copy[i][1:5] = [px_xmin, px_ymin, px_xmax, px_ymax]
 
-        return list_for_csv_copy
+    return list_for_csv_copy
 
-"""
-Adds column headers and data to a pandas dataframe then saves it as a csv file    
-"""
 def create_csv(list_for_csv, csv_name):
+    """
+    Adds column headers and data to a Pandas dataframe then saves it
+    as a csv file
+    :param list_for_csv: List with image name, mins and maxes, and label
+    :param csv_name: What the csv will be called, including path
+    """
     # Column headers to be in csv file
     columns = ["image_path", "xmin", "ymin", "xmax", "ymax", "label"]
 
